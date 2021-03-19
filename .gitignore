@@ -1,3 +1,5 @@
+*.eml
+
 .rebar3
 _*
 .eunit

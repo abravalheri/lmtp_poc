@@ -1,7 +1,7 @@
 {"1.2.0",
 [{<<"gen_smtp">>,
   {git,"git://github.com/abravalheri/gen_smtp.git",
-       {ref,"1e8502e7009f65071f6e61a165eac03afd0ebd2d"}},
+       {ref,"313bb3062bca34dfeeacceb43ae812ce2b6c0396"}},
   0},
  {<<"hut">>,{pkg,<<"hut">>,<<"1.3.0">>},0},
  {<<"ranch">>,{pkg,<<"ranch">>,<<"1.7.1">>},1}]}.
