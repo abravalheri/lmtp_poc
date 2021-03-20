@@ -2,6 +2,9 @@
 % based on `gen_smtp_server_session' tests.
 -module(lmtp_server_tests).
 
+%%%%%%%%%%%%%%%%%%%
+%%% TEST MACROS %%%
+%%%%%%%%%%%%%%%%%%%
 -include_lib("eunit/include/eunit.hrl").
 
 -define(MAIL_DIR, "test/fixtures/maildir").
@@ -30,14 +33,16 @@
 %%% TESTS DESCRIPTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 lmtp_server_test_() ->
-    {"The server should be able to receive an email", ?setup(fun email_with_multiple_RCPT/1)}.
+    [{"The server should be able to receive an email", ?setup(fun email_with_multiple_RCPT/1)}
+    ,{"The server should block unwanted senders", ?setup(fun email_with_unwanted_senders/1)}
+    ].
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%% SETUP FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%
 setup() ->
     true = os:putenv("MAIL_DIR", ?MAIL_DIR),
-    ?debugVal(os:getenv("MAIL_DIR")),
+    % ?debugVal(os:getenv("MAIL_DIR")),
     {ok, Pid} = application:ensure_all_started(gen_smtp),
     lmtp_server:start([{domain, "localhost"}, {port, 9876}]),
     {ok, CSock} = smtp_socket:connect(tcp, "localhost", 9876),
@@ -47,7 +52,7 @@ teardown({CSock, _Pid}) ->
     lmtp_server:stop(),
     smtp_socket:close(CSock),
     timer:sleep(10),
-    ?debugVal("END").
+    ok.
 
 %%%%%%%%%%%%%%%%%%%%
 %%% ACTUAL TESTS %%%
@@ -69,6 +74,34 @@ email_with_multiple_RCPT({CSock, _Pid}) ->
                       "message body",
                       "\r\n.\r\n"]),
     assert_n_deliveries(CSock, 2),
+    ?assertReply(CSock, "QUIT\r\n", "221 " ++ _),
+    %% Test check -- uncomment to make sure the test works
+    % X = rand:uniform(),
+    % ?assertEqual(X, 2),
+    ok.
+
+email_with_unwanted_senders({CSock, _Pid}) ->
+    ?assertBanner(CSock, "220 localhost" ++ _),
+    ?assertReply(CSock, "LHLO somehost.com\r\n", "250-localhost\r\n"),
+    ?assertEqual(handshake(CSock), ok),
+    ?assertReply(CSock, "MAIL FROM:<unwanted@otherhost>\r\n", "552 Go Away" ++ _),
+    ?assertSuccessful(CSock, "RCPT TO:<test1@localhost>\r\n"),
+    ?assertReply(CSock, "DATA\r\n", "503 Error: need MAIL command" ++ _),
+    smtp_socket:send(CSock,
+                     ["Subject: tls message\r\n",
+                      "To: <test1@localhost>\r\n",
+                      "From: <unwanted@otherhost.com>\r\n",
+                      "\r\n",
+                      "message body",
+                      "\r\n.\r\n"]),
+    % Since the SMTP server reads line by line, we are going to send a number
+    % of error messages equals to the number of lines the sender is sending
+    ?assertMatch("500 Error" ++ _, receive_packet(CSock)),
+    ?assertMatch("500 Error" ++ _, receive_packet(CSock)),
+    ?assertMatch("500 Error" ++ _, receive_packet(CSock)),
+    ?assertMatch("500 Error" ++ _, receive_packet(CSock)),
+    ?assertMatch("500 Error" ++ _, receive_packet(CSock)),
+    ?assertMatch("500 Error" ++ _, receive_packet(CSock)),
     ?assertReply(CSock, "QUIT\r\n", "221 " ++ _),
     %% Test check -- uncomment to make sure the test works
     % X = rand:uniform(),
@@ -101,10 +134,5 @@ handshake(CSock) ->
 assert_n_deliveries(_, 0) ->
     ok;
 assert_n_deliveries(CSock, N) ->
-    ?assertMatch("250 " ++ _,
-                 receive
-                     {tcp, CSock, Packet} ->
-                         smtp_socket:active_once(CSock),
-                         Packet
-                 end),
+    ?assertMatch("250 " ++ _, receive_packet(CSock)),
     assert_n_deliveries(CSock, N - 1).
