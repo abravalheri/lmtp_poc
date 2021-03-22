@@ -10,18 +10,12 @@ services:
       - LMTP_PORT=9876
       - LMTP_DOMAIN=lmtp
       - MAIL_DIR=/maildir
-    networks:
-      internal:
-        ipv4_address: 172.22.0.5
 
   smtp:
     image: smtp-server
     build:
       context: ${PWD}
       dockerfile: docker/Dockerfile.smtp
-    networks:
-      internal:
-        ipv4_address: 172.22.0.10
 
     # To send emails locally in the terminal for testing:
     # 1. Get inside the smtp container:
@@ -31,11 +25,3 @@ services:
 
     # To check for enqued emails:
     #    smtpctl show queue
-
-networks:
-  internal:
-    # driver: default
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.22.0.0/24
