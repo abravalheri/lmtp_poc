@@ -1,4 +1,5 @@
 *.eml
+/doc/
 
 .rebar3
 _*

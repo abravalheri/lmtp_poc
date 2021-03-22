@@ -34,7 +34,7 @@
 -record(state, {options = [] :: list(), blocked = undefined :: undefined | string()}).
 
 -type delivery_status() :: {ok | error, iodata()}.
-%% @doc Unique name used by `ranch' to refer to a socket listener
+%% Unique name used by `ranch' to refer to a socket listener
 %% (can be a `any()').
 -type ref() :: ranch:ref().
 
@@ -64,7 +64,7 @@
 % Public API
 %-------------------------------------------------------------------
 
-%% @doc Start a supervision tree with listeners for the LMTP protocol
+%% @doc Start a supervision tree with listeners for the LMTP protocol.
 -spec start() -> {ok, pid()} | {error, any()}.
 start() ->
     start(?MODULE, []).
@@ -77,7 +77,7 @@ start(Options) ->
 start(ServerName, Options) ->
     gen_smtp_server:start(ServerName, ?MODULE, lmtp_options(Options)).
 
-%% @doc Stop listening to the LMTP protocol
+%% @doc Stop listening to the LMTP protocol.
 -spec stop() -> ok | {error, any()}.
 stop() ->
     stop(?MODULE).
@@ -87,7 +87,7 @@ stop(ServerName) ->
     gen_smtp_server:stop(ServerName).
 
 %% @doc Create a `child_spec' derived from `gen_smtp_server' that can be used
-%% with a supervisor
+%% with a supervisor.
 -spec child_spec() -> supervisor:child_spec().
 child_spec() ->
     child_spec(?MODULE, []).
@@ -185,7 +185,7 @@ handle_MAIL(From, #state{blocked = Blocked} = State) ->
             {error, "552 Go Away", State}
     end.
 
-%% @hidden No extension implemented
+%% @hidden No extension implemented.
 handle_MAIL_extension(Extension, _State) ->
     ?log(warning, "Unknown MAIL FROM extension ~s~n", [Extension]),
     error.
@@ -232,11 +232,11 @@ handle_RSET(State) ->
     State#state{blocked = undefined}.
 
 %% @hidden Both VRFY and EXPN can be exploited to find out all the existing
-%% users
+%% users.
 handle_VRFY(_Address, State) ->
     {error, "252 VRFY disabled", State}.
 
-%% @hidden Similarly to VRFY, EXPN can be exploited by malicious clients
+%% @hidden Similarly to VRFY, EXPN can be exploited by malicious clients.
 handle_EXPN(_Address, State) ->
     {error, "252 EXPN disabled", State}.
 
@@ -247,7 +247,7 @@ handle_STARTTLS(State) ->
     ?log(debug, "LMTP TLS started"),
     State.
 
-%% @hidden Can be used to handle other LMTP/SMTP commands
+%% @hidden Can be used to handle other LMTP/SMTP commands.
 -spec handle_other(binary(), binary(), #state{}) -> {string(), #state{}}.
 handle_other(Verb, _Args, State) ->
     % You can implement other SMTP verbs here, if you need to
@@ -258,7 +258,7 @@ handle_other(Verb, _Args, State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-%% @hidden Let's just terminate if asked to do so
+%% @hidden Let's just terminate if asked to do so.
 -spec terminate(Reason :: any(), State :: #state{}) -> {ok, any(), #state{}}.
 terminate(Reason, State) ->
     {ok, Reason, State}.
@@ -268,7 +268,7 @@ terminate(Reason, State) ->
 %-------------------------------------------------------------------
 
 %% @hidden
-%% Stores the email in the directory given by `mail_dir/1'
+%% Stores the email in the directory given by `mail_dir/1'.
 -spec store_mail(string(), binary(), binary(), iodata()) -> delivery_status().
 store_mail(Reference, From, To, Data) ->
     File = filename:join(mail_dir(To), Reference ++ ?EMAIL_EXT),
@@ -283,7 +283,7 @@ store_mail(Reference, From, To, Data) ->
 
 %% @hidden
 %% Creates a unique reference string that can be used as id to store the
-%% email
+%% email.
 -spec reference() -> string().
 reference() ->
     UniqueId = erlang:unique_integer(),
@@ -305,7 +305,7 @@ mail_dir(Recipient) ->
     filename:join(mail_dir(), Recipient).
 
 %% @hidden
-%% Allow configuring port and domain via environment variables
+%% Allow configuring port and domain via environment variables.
 socket_options(Options) ->
     DefaultDomain = os:getenv("LMTP_DOMAIN", ?DEFAULT_DOMAIN),
     DefaultPort = list_to_integer(os:getenv("LMTP_PORT", ?DEFAULT_PORT)),
@@ -316,7 +316,7 @@ socket_options(Options) ->
     [{domain, Domain}, {port, Port} | Opts2].
 
 %% @hidden
-%% Ensure 'protocol' inside 'sessionoptions' is 'lmtp'
+%% Ensure 'protocol' inside 'sessionoptions' is 'lmtp'.
 lmtp_options(Options) ->
     SessionOpts = proplists:get_value(sessionoptions, Options, []),
     SessionOpts1 = proplists:delete(protocol, SessionOpts),
