@@ -16,13 +16,18 @@
 -define(BLOCKED_LIST, "blocked.txt").
 -define(EMAIL_EXT, ".eml").
 
+-define(DEFAULT_DOMAIN, "localhost").
+-define(DEFAULT_PORT, "24").
+
 -behaviour(gen_smtp_server_session).
 
 -include_lib("hut/include/hut.hrl").  % Used for logging
 
 -ifdef(TEST).
+
 % useful for debugging
 -include_lib("eunit/include/eunit.hrl").
+
 -endif.
 
 % Types
@@ -166,7 +171,9 @@ handle_MAIL(From, #state{blocked = undefined} = State) ->
             {ok, Contents} ->
                 unicode:characters_to_list(Contents);
             {error, Reason} ->
-                ?log(info, "File ~p not found, no sender will be blocked (~p)~n", [BlockedFile, Reason]),
+                ?log(info,
+                     "File ~p not found, no sender will be blocked (~p)~n",
+                     [BlockedFile, Reason]),
                 ""
         end,
     handle_MAIL(From, State#state{blocked = Blocked});
@@ -252,7 +259,7 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %% @hidden Let's just terminate if asked to do so
--spec terminate(Reason :: any(), State :: #state{}) -> {'ok', any(), #state{}}.
+-spec terminate(Reason :: any(), State :: #state{}) -> {ok, any(), #state{}}.
 terminate(Reason, State) ->
     {ok, Reason, State}.
 
@@ -298,10 +305,21 @@ mail_dir(Recipient) ->
     filename:join(mail_dir(), Recipient).
 
 %% @hidden
+%% Allow configuring port and domain via environment variables
+socket_options(Options) ->
+    DefaultDomain = os:getenv("LMTP_DOMAIN", ?DEFAULT_DOMAIN),
+    DefaultPort = list_to_integer(os:getenv("LMTP_PORT", ?DEFAULT_PORT)),
+    Domain = proplists:get_value(domain, Options, DefaultDomain),
+    Port = proplists:get_value(port, Options, DefaultPort),
+    Opts = proplists:delete(domain, Options),
+    Opts2 = proplists:delete(port, Opts),
+    [{domain, Domain}, {port, Port} | Opts2].
+
+%% @hidden
 %% Ensure 'protocol' inside 'sessionoptions' is 'lmtp'
 lmtp_options(Options) ->
     SessionOpts = proplists:get_value(sessionoptions, Options, []),
     SessionOpts1 = proplists:delete(protocol, SessionOpts),
     SessionOpts2 = [{protocol, lmtp} | SessionOpts1],
     Opts = proplists:delete(sessionoptions, Options),
-    [{sessionoptions, SessionOpts2} | Opts].
+    socket_options([{sessionoptions, SessionOpts2} | Opts]).

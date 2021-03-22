@@ -1,0 +1,16 @@
+# syntax = docker/dockerfile:experimental
+
+ARG BASE_IMAGE=alpine:3.13
+
+FROM $BASE_IMAGE
+
+RUN --mount=type=cache,id=apk_cache,target=/var/cache/apk \
+    ln -vs /var/cache/apk /etc/apk/cache && \
+    apk add --update opensmtpd bind-tools
+
+EXPOSE 25
+
+COPY docker/smtpd.conf /etc/smtpd/
+
+ENTRYPOINT ["/usr/bin/env"]
+CMD ["smtpd", "-dv"]

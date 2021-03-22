@@ -33,19 +33,21 @@
 %%% TESTS DESCRIPTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 lmtp_server_test_() ->
-    [{"The server should be able to receive an email", ?setup(fun email_with_multiple_RCPT/1)}
-    ,{"The server should block unwanted senders", ?setup(fun email_with_unwanted_senders/1)}
-    ].
+    [{"The server should be able to receive an email",
+      ?setup(fun email_with_multiple_RCPT/1)},
+     {"The server should block unwanted senders", ?setup(fun email_with_unwanted_senders/1)}].
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%% SETUP FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%
 setup() ->
     true = os:putenv("MAIL_DIR", ?MAIL_DIR),
+    true = os:putenv("LMTP_DOMAIN", "localhost"),
+    true = os:putenv("LMTP_PORT", "9885"),
     % ?debugVal(os:getenv("MAIL_DIR")),
     {ok, Pid} = application:ensure_all_started(gen_smtp),
-    lmtp_server:start([{domain, "localhost"}, {port, 9876}]),
-    {ok, CSock} = smtp_socket:connect(tcp, "localhost", 9876),
+    lmtp_server:start(),
+    {ok, CSock} = smtp_socket:connect(tcp, "localhost", 9885),
     {CSock, Pid}.
 
 teardown({CSock, _Pid}) ->

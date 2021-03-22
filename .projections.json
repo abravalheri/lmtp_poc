@@ -1,6 +1,6 @@
 {
   "src/*.erl" : {
-    "alternate": "test/{basename}_test.erl",
+    "alternate": "test/{basename}_tests.erl",
     "type": "source",
     "template": [
       "%%%-------------------------------------------------------------------",

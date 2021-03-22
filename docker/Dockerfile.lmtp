@@ -1,0 +1,50 @@
+# syntax = docker/dockerfile:experimental
+
+ARG BASE_IMAGE=erlang:23.2.7.0-alpine
+ARG RUNNER_IMAGE=alpine:3.13
+
+## ----- Download deps and compile -----
+
+FROM $BASE_IMAGE as compiler
+
+RUN --mount=type=cache,id=apk_cache,target=/var/cache/apk \
+    ln -vs /var/cache/apk /etc/apk/cache && \
+    apk add --update git
+
+ENV REBAR_BASE_DIR /app/_build
+
+WORKDIR /app/code
+COPY rebar.config rebar.lock .
+COPY src src
+
+RUN --mount=type=cache,id=rebar_cache,target=/root/.cache/rebar3/ \
+    rebar3 as prod compile
+
+
+## ----- Build release -----
+
+from compiler as releaser
+
+RUN --mount=type=cache,id=rebar_cache,target=/root/.cache/rebar3/ \
+    rebar3 as prod release
+
+
+## ----- Run released app -----
+
+FROM $RUNNER_IMAGE as runner
+
+RUN --mount=type=cache,id=apk_cache,target=/var/cache/apk \
+    ln -vs /var/cache/apk /etc/apk/cache && \
+    apk add --update openssl ncurses bind-tools
+
+# write files generated during startup to /tmp
+ENV RELX_OUT_FILE_PATH /tmp
+
+WORKDIR /maildir
+# define "mailboxes" for pre-configured aliases
+RUN mkdir postmaster@localhost operator@localhost
+COPY test/fixtures/maildir/blocked.txt ./
+COPY --from=releaser /app/_build/prod/rel /opt
+
+ENTRYPOINT ["/opt/lmtp_poc/bin/lmtp_poc"]
+CMD ["foreground"]

@@ -4,7 +4,7 @@
   {vsn, "0.1.0"},
   {registered, []},
   {mod, {lmtp_poc_app, []}},
-  {applications, [kernel, stdlib]},
+  {applications, [kernel, stdlib, gen_smtp, hut]},
   {env, []},
   {modules, []},
   {licenses, ["Apache 2.0"]},

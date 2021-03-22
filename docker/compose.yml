@@ -1,0 +1,41 @@
+---
+services:
+  lmtp:
+    image: lmtp-server
+    build:
+      context: ${PWD}
+      dockerfile: docker/Dockerfile.lmtp
+      target: runner
+    environment:
+      - LMTP_PORT=9876
+      - LMTP_DOMAIN=lmtp
+      - MAIL_DIR=/maildir
+    networks:
+      internal:
+        ipv4_address: 172.22.0.5
+
+  smtp:
+    image: smtp-server
+    build:
+      context: ${PWD}
+      dockerfile: docker/Dockerfile.smtp
+    networks:
+      internal:
+        ipv4_address: 172.22.0.10
+
+    # To send emails locally in the terminal for testing:
+    # 1. Get inside the smtp container:
+    #    docker exec -ti docker_smtp_1 ash
+    # 2. Run sendmail
+    #    echo "Subject: hello" | sendmail -f test@smtp test1@lmtp
+
+    # To check for enqued emails:
+    #    smtpctl show queue
+
+networks:
+  internal:
+    # driver: default
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/24

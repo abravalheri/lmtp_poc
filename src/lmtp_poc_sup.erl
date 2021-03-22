@@ -29,7 +29,7 @@ init([]) ->
         #{strategy => one_for_all,
           intensity => 0,
           period => 1},
-    ChildSpecs = [],
+    ChildSpecs = [lmtp_server:child_spec()],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions
