@@ -2,8 +2,10 @@ lmtp_poc
 ========
 
 This repository is a proof of concept for the modifications made in `gen_smtp`
-to implement the LMTP protocol. The implementation is very simplified and just
-stores mail files (`*.eml`) in the file system.
+to implement the LMTP protocol
+([github:abravalheri/gen_smtp@add-lmtp](https://github.com/abravalheri/gen_smtp/tree/add-lmtp)).
+The implementation is very simplified and just stores mail files (`*.eml`) in
+the file system.
 
 `src/lmtp_server.erl` implements the callbacks necessary for
 `gen_smtp_server_session`. It is important to notice that this behaviour
