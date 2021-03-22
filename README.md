@@ -62,11 +62,11 @@ You can also see it in action and test the implementation manually.
 
 To see the received emails, "tap" into the LMTP server, and check the folders
 for each recipient:
-    ```bash
-    $ docker-compose -f docker/compose.yml exec lmtp ash
-    $ ls postmaster@localhost  # see received emails as .eml files
-    $ cat postmaster@localhost/*.eml
-    ```
+```bash
+$ docker-compose -f docker/compose.yml exec lmtp ash
+$ ls postmaster@localhost  # see received emails as .eml files
+$ cat postmaster@localhost/*.eml
+```
 
 For simplicity, OpenSMTPD and the LMTP server are configured to accept only
 emails for `postmaster@localhost` and `operator@localhost`.
