@@ -12,6 +12,7 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
+    logger:set_primary_config(level, debug),
     ?log(info, "*** ~p started ***~n", [?MODULE]),
     lmtp_poc_sup:start_link().
 

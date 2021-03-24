@@ -3,6 +3,7 @@ project_folder="$(cd "$(cd "$(dirname "$(realpath $0)")")" && pwd)"
 compose="$project_folder/docker/compose.yml"
 
 existing_email="postmaster@localhost"
+other_existing_email="operator@localhost"
 unknown_email="unknown@localhost"
 
 start_containers() {
@@ -19,7 +20,7 @@ count_entries() {
 }
 
 send_mail() {
-  docker-compose -f "$compose" exec -T smtp sendmail -f sender@mail "$1"
+  docker-compose -f "$compose" exec -T smtp sendmail -f sender@mail "$@"
 }
 
 test_send_success() {
@@ -28,6 +29,20 @@ test_send_success() {
   after="$(count_entries "$existing_email")"
   echo -ne "   --- ${FUNCNAME[0]}  \t"
   if ((after = before + 1)); then
+    echo "ok"
+  else
+    echo "fail - no email was received"
+  fi
+}
+
+test_send_2_successes() {
+  before="$(count_entries "$existing_email")"
+  before_other="$(count_entries "$other_existing_email")"
+  echo "Subject: hello" | send_mail "$existing_email" "$other_existing_email"
+  after="$(count_entries "$existing_email")"
+  after_other="$(count_entries "$other_existing_email")"
+  echo -ne "   --- ${FUNCNAME[0]}  \t"
+  if ((after = before + 1)) && ((after_other = before_other + 1)); then
     echo "ok"
   else
     echo "fail - no email was received"
@@ -53,6 +68,7 @@ echo "Running system tests with the help of docker"
   cd "$project_folder";
   start_containers;
   test_send_success;
+  test_send_2_successes;
   test_send_error;
   stop_containers
 }
